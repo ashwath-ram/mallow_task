@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bill Summary</title>
+    <style>
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <h2>Invoice</h2>
+
+    <div class="meta">
+        <strong>Customer:</strong> {{ bill.customer_email }} <br>
+        <strong>Invoice No:</strong> {{ bill.purchase_no }} <br>
+        <strong>Date:</strong> {{ bill.purchase_date }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>MRP</th>
+                <th>Qty</th>
+                <th>Base Price</th>
+                <th>Tax %</th>
+                <th>Tax</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>₹ {{ item.unit_price_at_sale }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹ {{ item.net_price|floatformat:2 }}</td>
+                <td>{{ item.tax_at_sale }}%</td>
+                <td>
+                    ₹ {{ item.unit_price_at_sale|floatformat:2|add:"0"|floatformat:2 }}
+                </td>
+                <td>
+                    ₹ {{ item.net_price|floatformat:2 }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary clearfix">
+        <div><strong>Total (Excl. Tax):</strong> ₹ {{ bill.total_price_without_tax }}</div>
+        <div><strong>Total Tax:</strong> ₹ {{ bill.total_tax }}</div>
+        <div><strong>Net Price:</strong> ₹ {{ bill.net_price }}</div>
+        <div><strong>Rounded Net Price:</strong> ₹ {{ bill.rounded_net_price }}</div>
+        <div><strong>Cash Received:</strong> ₹ {{ bill.cash_received }}</div>
+        <div><strong>Balance:</strong> ₹ {{ balance }}</div>
+    </div>
+    <div style="margin-top:20px;">
+        <h4>Balance Denominations</h4>
+
+        {% if balance_denominations %}
+            {% for denom, count in balance_denominations.items %}
+                <div>
+                    ₹ {{ denom }} × {{ count }}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div>No change required</div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top:40px;">
+        <a href="{% url 'billing_page' %}" class="btn">New Bill</a>
+        <a href="{% url 'previous_bill' %}" class="btn btn-secondary">Previous Bills</a>
+    </div>
+
+</div>
+
+</body>
+</html>

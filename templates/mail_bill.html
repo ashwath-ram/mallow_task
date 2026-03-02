@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Bill</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
+        .total-section { margin-top: 20px; float: right; width: 300px; }
+    </style>
+</head>
+<body>
+
+<h2>Sales Invoice</h2>
+
+<p><strong>Invoice No:</strong> {{ bill.purchase_no }}</p>
+<p><strong>Purchase Date:</strong> {{ bill.purchase_date }}</p>
+<p><strong>Customer Email:</strong> {{ bill.customer_email }}</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Unit Price</th>
+            <th>Tax %</th>
+            <th>Tax Amount</th>
+            <th>Net Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unit_price_at_sale }}</td>
+            <td>{{ item.tax_at_sale }}</td>
+            <td>{{ item.tax_amount }}</td>
+            <td>{{ item.net_price }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="total-section">
+    <p><strong>Total Without Tax:</strong> ₹ {{ bill.total_price_without_tax }}</p>
+    <p><strong>Total Tax:</strong> ₹ {{ bill.total_tax }}</p>
+    <p><strong>Net Price:</strong> ₹ {{ bill.net_price }}</p>
+    <p><strong>Rounded Net Price:</strong> ₹ {{ bill.rounded_net_price }}</p>
+    <p><strong>Cash Received:</strong> ₹ {{ bill.cash_received }}</p>
+</div>
+
+</body>
+</html>

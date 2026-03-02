@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing</title>
+</head>
+<body>
+
+<center>
+
+{% block content %}
+<div id="page1">
+  <div class="navbar">
+    <a class="brand" href="{% url 'billing_page' %}">Billing</a>
+    <nav>
+        <a href="{% url 'billing_page' %}">New Bill</a> &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="{% url 'previous_bill' %}">Previous Bill</a> &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="{% url 'logout' %}">Logout ({{ user.username }})</a>
+    </nav>
+    </div>
+  <div class="card">
+    <div class="card-title">Billing Page</div>
+
+    <div class="form-row">
+      <label>Customer Email</label>
+      <input type="email" id="customer_email" placeholder="Email ID" style="width:260px">
+    </div>
+
+    
+    <div class="form-row" style="align-items:flex-start;">
+      <label style="padding-top:6px;">Bill section</label>
+      <div id="product-rows" style="flex:1;">
+          
+        <div class="product-row">
+            <select class="pid-input">
+                <option value="">Select Product</option>
+                {% for product in products %}
+                    <option value="{{ product.product_id }}">
+                    {{ product.name }} [{{product.product_id}}] - ₹ {{ product.price_per_unit }}
+                    </option>
+                {% endfor %}
+            </select>
+          <input type="number" placeholder="Quantity" class="qty-input"  style="width:100px" min="1">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button>
+        </div>
+    </div>
+</div>
+<div style="margin-bottom:10px;">
+  <button class="btn btn-primary" type="button" onclick="addProductRow()">Add New</button>
+</div>
+
+    <hr class="sep">
+
+    {# Denominations #}
+    <div class="form-row" style="align-items:flex-start;">
+      <label style="padding-top:4px;">Denominations</label>
+      <div>
+        {% for d in denominations %}
+        <div class="denom-row">
+          <span class="denom-label">{{ d }}</span>
+          <input type="number" class="denom-input" data-denom="{{ d }}"
+                 placeholder="Count" min="0" value="0" style="width:80px">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Cash paid #}
+    <div class="form-row">
+      <label>Cash paid by customer</label>
+      <input type="number" id="cash_paid" placeholder="Amount" min="0" step="0.01" style="width:160px">
+    </div>
+
+    {# Error message #}
+    <div id="form-error" class="alert alert-danger" style="display:none;"></div>
+
+    {# Buttons #}
+    <div class="flex-end">
+      <button type="button" class="btn btn-secondary" onclick="resetForm()">Cancel</button>
+      <button type="button" class="btn btn-success"   onclick="submitBill()">Generate Bill</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Show Previous Bills</div>
+    <div class="form-row">
+      <label>Customer Email</label>
+      <input type="email" id="lookup_email" placeholder="Enter customer email" style="width:260px">
+      <button type="button" class="btn btn-primary"
+              onclick="window.location.href='/previous_bill/?email='+encodeURIComponent(document.getElementById('lookup_email').value)">
+        Show Previous Bills
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const CSRF = "{{ csrf_token }}";
+
+  function addProductRow() {
+    const container = document.getElementById('product-rows');
+    const row = document.createElement('div');
+    row.className = 'product-row';
+    row.innerHTML = `
+      <select class="pid-input">
+          <option value="">Select Product</option>
+          {% for product in products %}
+              <option value="{{ product.product_id }}">
+              {{ product.name }} [{{product.product_id}}] - ₹ {{ product.price_per_unit }}
+              </option>
+          {% endfor %}
+      </select>
+      <input type="number" placeholder="Quantity"   class="qty-input"  style="width:100px" min="1">
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function removeRow(btn) {
+    const allRows = document.querySelectorAll('.product-row');
+    if (allRows.length <= 1) return;   // keep at least one row
+    btn.closest('.product-row').remove();
+  }
+
+  function resetForm() {
+    document.getElementById('customer_email').value = '';
+    document.getElementById('cash_paid').value = '';
+    document.querySelectorAll('.denom-input').forEach(i => i.value = '0');
+    const container = document.getElementById('product-rows');
+    container.innerHTML = `
+  <div class="product-row">
+    <select class="pid-input">
+      <option value="">Select Product</option>
+      {% for product in products %}
+        <option value="{{ product.product_id }}">
+          {{ product.name }} [{{product.product_id}}] - ₹ {{ product.price_per_unit }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="number" placeholder="Quantity" class="qty-input" style="width:100px" min="1">
+    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">✕</button>
+  </div>`;
+    hideError();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('form-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+  function hideError() {
+    document.getElementById('form-error').style.display = 'none';
+  }
+
+  async function submitBill() {
+    const email = document.getElementById('customer_email').value.trim();
+    const cashPaid = parseFloat(document.getElementById('cash_paid').value) || 0;
+
+
+    const items = [];
+
+    document.querySelectorAll('.product-row').forEach(row => {
+      const productId = row.querySelector('.pid-input').value;
+      const qtyInput = row.querySelector('.qty-input').value;
+      
+      console.log("product id:", productId);
+      console.log("qty :", qtyInput);
+
+      if (!productId || !qtyInput) return;
+
+      const pid = parseInt(productId, 10);
+      const qty = parseInt(qtyInput, 10);
+
+      if (pid && qty > 0) {
+        items.push({
+          product: pid,
+          quantity: qty
+        });
+      }
+    });
+
+    console.log("Collected items:", items);
+
+    // Collect denomination counts
+    const denominations = {};
+    document.querySelectorAll('.denom-input').forEach(inp => {
+      denominations[inp.dataset.denom] = parseInt(inp.value, 10) || 0;
+    });
+
+    const payload = { customer_email: email, items, denominations, cash_paid: cashPaid };
+
+    let data;
+    try {
+      const resp = await fetch("{% url 'generate_bill' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRF,
+        },
+        body: JSON.stringify(payload),
+      });
+      data = await resp.json();
+      console.log('--->',data)
+    } catch (e) {
+      showError('SOmethings went wrong, please try again.');
+      return;
+    }
+
+    if (data.status == 'fail') {
+      showError(data.message || 'An unknown error occurred.');
+      return;
+    }
+    window.location.href = `/bill_detail/?bill_id=${data.purchase_id}`;
+
+  }
+</script>
+{% endblock %}
+
+</center>
+</body>
+</html>

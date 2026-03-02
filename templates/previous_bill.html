@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Bill</title>
+    <style>
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+    <a class="brand" href="{% url 'billing_page' %}">🧾 Billing</a>
+    <nav>
+        <a href="{% url 'billing_page' %}">New Bill</a>
+        <a href="{% url 'previous_bill' %}">Previous Purchases</a>
+        <a href="{% url 'logout' %}">Logout ({{ user.username }})</a>
+    </nav>
+    </div>
+    {% block title %}Previous Purchases{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-title">Previous Purchases</div>
+
+  {# Email lookup form #}
+  <form method="get" action="{% url 'previous_bill' %}" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <label style="font-weight:bold;">Customer Email</label>
+    {{ form.email }}
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if email %}
+      <a href="{% url 'previous_bill' %}" class="btn btn-secondary btn-sm">Clear</a>
+    {% endif %}
+  </form>
+
+  {% if email %}
+    <div class="mt-20">
+      {% if purchases is not None %}
+        {% if purchases %}
+          <p style="margin-bottom:10px;">
+            Found <strong>{{ purchases|length }}</strong> purchase{% if purchases|length != 1 %}s{% endif %}
+            for <strong>{{ email }}</strong>:
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Purchase ID</th>
+                <th>Date &amp; Time</th>
+                <th>Net Price</th>
+                <th>Cash Paid</th>
+                <th>Balance</th>
+                <th>Items</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in purchases %}
+              <tr>
+                <td>#{{ p.id }}</td>
+                <td>{{ p.created_at|date:"d M Y, H:i" }}</td>
+                <td>&#8377;{{ p.net_price|floatformat:2 }}</td>
+                <td>&#8377;{{ p.cash_paid|floatformat:2 }}</td>
+                <td>&#8377;{{ p.balance|floatformat:2 }}</td>
+                <td>{{ p.items.count }}</td>
+                <td></td>
+                <td>
+                  <a href="{% url 'bill_detail' %}?bill_id={{ p.id }}"
+                     class="btn btn-primary btn-sm">View Details</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-warning">
+            No purchases found for <strong>{{ email }}</strong>.
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="text-center">
+  <a href="{% url 'billing_page' %}" class="btn btn-secondary">← Back to Billing</a>
+</div>
+{% endblock %}
+
+</body>
+</html>
