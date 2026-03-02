@@ -1,13 +1,6 @@
 from threading import Thread
 from django.core.mail import send_mail
 from django.conf import settings
-import os
-import django
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'BillingDesk.settings')
-
-# 2. Initialize Django
-django.setup()
 
 
 def send_email(subject, message, recipient_list):

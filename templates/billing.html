@@ -52,7 +52,6 @@
 
     <hr class="sep">
 
-    {# Denominations #}
     <div class="form-row" style="align-items:flex-start;">
       <label style="padding-top:4px;">Denominations</label>
       <div>
@@ -66,16 +65,13 @@
       </div>
     </div>
 
-    {# Cash paid #}
     <div class="form-row">
       <label>Cash paid by customer</label>
       <input type="number" id="cash_paid" placeholder="Amount" min="0" step="0.01" style="width:160px">
     </div>
 
-    {# Error message #}
     <div id="form-error" class="alert alert-danger" style="display:none;"></div>
 
-    {# Buttons #}
     <div class="flex-end">
       <button type="button" class="btn btn-secondary" onclick="resetForm()">Cancel</button>
       <button type="button" class="btn btn-success"   onclick="submitBill()">Generate Bill</button>
@@ -182,7 +178,6 @@
 
     console.log("Collected items:", items);
 
-    // Collect denomination counts
     const denominations = {};
     document.querySelectorAll('.denom-input').forEach(inp => {
       denominations[inp.dataset.denom] = parseInt(inp.value, 10) || 0;
